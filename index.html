@@ -242,6 +242,16 @@ select.study-filter-btn{appearance:none;background-image:url('data:image/svg+xml
 .flashcard.flipped .fc-back { z-index: 2; }
 /* FRONT */
 .fc-front{background:linear-gradient(135deg,var(--white) 0%,#f4ead8 50%,#ead9c0 100%);align-items:center;justify-content:center;justify-content:safe center;padding:55px 16px 30px;gap:12px;position:relative;text-align:center}
+.fc-front.has-cover{padding:55px 16px 24px;justify-content:flex-start;gap:10px}
+.fc-front.has-cover .fc-word-wrap{margin-bottom:4px!important}
+.fc-front.has-cover .fc-image-container{flex:0 0 auto!important;height:clamp(230px,38dvh,320px);min-height:0;margin:0 0 3px}
+.fc-front.has-cover #fcDrawingWrap{height:100%!important;flex:1 1 auto!important}
+.fc-cover-image{width:100%;height:100%;object-fit:contain;background:rgba(244,234,216,.55);border-radius:15px;box-shadow:0 5px 18px rgba(58,41,24,.16);border:1px solid rgba(58,41,24,.12);cursor:zoom-in}
+.fc-front.has-cover .fc-audio-row{gap:8px!important;margin-top:3px!important;flex:0 0 auto}
+.fc-front.has-cover .fc-audio-row .btn-audio{width:32px;height:32px;font-size:14px}
+.fc-front.has-cover .fc-status-wrap{margin-top:5px!important;margin-bottom:18px!important;gap:8px}
+.fc-front.has-cover .fc-status-btn{min-width:126px;padding:6px 12px;font-size:11px}
+.fc-front.has-cover .fc-fav-btn{font-size:19px;margin-top:0!important}
 .fc-drawing{width:60px;height:60px;flex-shrink:0;opacity:.9}
 .fc-front .fc-word{font-size:clamp(24px,6vw,42px);font-weight:700;color:var(--text);font-family:Georgia,serif;line-height:1.1;word-break:break-word;hyphens:auto;letter-spacing:-.5px;padding:0 4px;text-align:center}
 .fc-tap-hint{position:absolute;bottom:12px;left:0;right:0;text-align:center;font-family:Arial,sans-serif;font-size:9.5px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;opacity:.7}
@@ -1028,7 +1038,7 @@ window.addEventListener('message', function(event) {
       </div>
     </div>
     <div class="filter-row" id="filterRow">
-      <div class="flt-btn on" data-flt="all">Todas (1300)</div>
+      <div class="flt-btn on" data-flt="all">Todas (<span id="studyAllCount">161</span>)</div>
       <div class="flt-btn" data-flt="noun">Sustantivos</div>
       <div class="flt-btn" data-flt="verb">Verbos</div>
       <div class="flt-btn" data-flt="adjective">Adjetivos</div>
@@ -1079,7 +1089,7 @@ window.addEventListener('message', function(event) {
               <button type="button" class="fc-img-btn fc-img-btn-red" id="fcImageDelete" title="Borrar foto" onclick="handleImageDelete(event)" style="display:none;">🗑️ Borrar</button>
             </div>
           </div>
-          <div style="display:flex; justify-content:center; gap:15px; margin-top: 10px;">
+          <div class="fc-audio-row" style="display:flex; justify-content:center; gap:15px; margin-top: 10px;">
             <button class="btn-audio" id="btnPlayAudioUK" type="button" onclick="event.stopPropagation(); playCurrentWordAudio('UK')" title="Escuchar en Británico (UK)">🇬🇧</button>
             <button class="btn-audio" id="btnPlayAudioUS" type="button" onclick="event.stopPropagation(); playCurrentWordAudio('US')" title="Escuchar en Americano (US)">🇺🇸</button>
           </div>
@@ -1274,6 +1284,7 @@ window.addEventListener('message', function(event) {
       <div class="form-row"><label for="newLevel">Nivel</label><select id="newLevel" style="width:100%; padding:12px 14px; border-radius:12px; background:#eef7eb; border:1.5px solid #c4e1c3; color:#2c4230; font-weight:800; font-family:var(--fb); cursor:pointer; outline:none; box-shadow:0 4px 0 #c4e1c3;"><option value="">Ninguno</option><option value="b2_1">B2.1</option><option value="b2_2">B2.2</option><option value="c1">C1</option></select></div>
       <div class="form-row"><label for="newReg">Registro</label><select id="newReg"><option value="N">Neutral</option><option value="F">Formal</option><option value="I">Informal</option></select></div>
       <div class="form-row full"><label for="newStruct">Estructura / cómo se usa</label><textarea id="newStruct" placeholder="Opcional: estructura, preposición, patrón, notas de uso..."></textarea></div>
+      <div class="form-row full"><label for="newImageUpload">Portada visual de la flashcard <span style="font-weight:400;color:var(--text3);">(opcional)</span></label><input id="newImageUpload" type="file" accept="image/png, image/jpeg, image/webp" style="width:100%;padding:10px;background:var(--cream);border:1.5px solid var(--border);border-radius:12px;font-family:Arial,sans-serif;"><small style="color:var(--text3);font-family:Arial,sans-serif;line-height:1.4;">Elige una ilustración relacionada con la palabra. Se guardará comprimida junto a la tarjeta.</small><div id="newImagePreview" style="display:none;margin-top:8px;text-align:center;"></div></div>
       <div class="form-row full"><label>Ejemplos con traducción</label><div id="newExamples" class="examples-form"></div><button class="btn-sec" id="btnNewExample" type="button">＋ Añadir ejemplo</button></div>
     </div>
     <div class="modal-actions"><button class="modal-btn secondary" id="btnCancelNewCard" type="button">Cancelar</button><button class="modal-btn primary" id="btnSaveNewCard" type="button">Guardar flashcard</button></div>
@@ -1860,16 +1871,16 @@ function capFirst(s){
 /* Build all flashcard data */
 
 const YAN_CARDS = [
-  {cat: "verb", level: "c1", word: "Recalled", trans: "recordar / rememorar", examples: [{sense: "recordar / rememorar", examples: [["She recalled her childhood home.", "Va recordar casa seva de la infantesa."]]}], struct: "Se suele usar seguido de un objeto directo (recall something) o un gerundio (recall doing something). No lleva \"to\"."},
-  {cat: "verb", level: "c1", word: "Conceded", trans: "cedir / admetre / atorgar", examples: [{sense: "cedir / admetre / atorgar", examples: [["She conceded that he was right.", "Va admetre que ell tenia raó. (admetre a contracor)"]]}], struct: "Seguido a menudo por una oración con \"that\" (conceded that...). Puede usarse con objeto directo (conceded defeat)."},
-  {cat: "phrasal", level: "c1", word: "Call on someone to do something", trans: "demanar a algú que faci alguna cosa", examples: [{sense: "demanar a algú que faci alguna cosa", examples: [["The union called on workers to strike.", "El sindicat va instar els treballadors a fer vaga."]]}], struct: "Estructura fija: Call on + persona + to + infinitivo. Indica pedir formalmente que alguien haga algo."},
-  {cat: "verb", level: "c1", word: "Vow", trans: "fer un jurament / jurar", examples: [{sense: "fer un jurament / jurar", examples: [["He vowed to change.", "Va jurar que canviaria."]]}], struct: "Se usa a menudo con \"to + infinitivo\" (vow to do something) o seguido de \"that\" (vow that)."},
-  {cat: "verb", level: "c1", word: "Urge", trans: "insistir / instar", examples: [{sense: "insistir / instar", examples: [["She urged him to see a doctor.", "El va instar a anar al metge."]]}], struct: "Se usa fuertemente con la estructura: Urge + persona + to + infinitivo."},
-  {cat: "adjective", level: "c1", word: "Adamant", trans: "ferm / inflexible", examples: [{sense: "ferm / inflexible", examples: [["He was adamant that he wouldn't go.", "Es va mostrar inflexible: no hi aniria."]]}], struct: "Suele ir acompañado de \"that\" (adamant that) o \"about\" (adamant about something)."},
-  {cat: "adjective", level: "c1", word: "Dismissive", trans: "indiferent / despectiu", examples: [{sense: "indiferent / despectiu", examples: [["She gave a dismissive answer.", "Va donar una resposta despectiva."]]}], struct: "Suele usarse con la preposición \"of\" (dismissive of something/someone)."},
-  {cat: "adjective", level: "c1", word: "Astounded", trans: "estupefacte", examples: [{sense: "estupefacte", examples: [["I was astounded by the news.", "Em vaig quedar estupefacte amb la notícia."]]}], struct: "Suele ir con \"by\" o \"at\" (astounded by/at) o con infinitivo (astounded to see)."},
-  {cat: "adjective", level: "c1", word: "Appalling", trans: "horrorós", examples: [{sense: "horrorós", examples: [["The conditions were appalling.", "Les condicions eren horroroses."]]}], struct: "Adjetivo que precede a un sustantivo (appalling behaviour) o sigue al verbo to be (it is appalling)."},
-  {cat: "adjective", level: "c1", word: "Relentless", trans: "implacable / incessant", examples: [{sense: "implacable / incessant", examples: [["The relentless rain continued all week.", "La pluja incessant va continuar tota la setmana."]]}], struct: "Adjetivo para describir algo incesante. Se usa mucho con sustantivos abstractos: relentless pressure, relentless heat."},
+  {cat: "verb", level: "c1", word: "Recalled", trans: "recordar / rememorar", image: "assets/card-covers/recalled.png", examples: [{sense: "recordar / rememorar", examples: [["She recalled her childhood home.", "Va recordar casa seva de la infantesa."]]}], struct: "Se suele usar seguido de un objeto directo (recall something) o un gerundio (recall doing something). No lleva \"to\"."},
+  {cat: "verb", level: "c1", word: "Conceded", trans: "cedir / admetre / atorgar", image: "assets/card-covers/conceded.png", examples: [{sense: "cedir / admetre / atorgar", examples: [["She conceded that he was right.", "Va admetre que ell tenia raó. (admetre a contracor)"]]}], struct: "Seguido a menudo por una oración con \"that\" (conceded that...). Puede usarse con objeto directo (conceded defeat)."},
+  {cat: "phrasal", level: "c1", word: "Call on someone to do something", trans: "demanar a algú que faci alguna cosa", image: "assets/card-covers/call-on-someone.png", examples: [{sense: "demanar a algú que faci alguna cosa", examples: [["The union called on workers to strike.", "El sindicat va instar els treballadors a fer vaga."]]}], struct: "Estructura fija: Call on + persona + to + infinitivo. Indica pedir formalmente que alguien haga algo."},
+  {cat: "verb", level: "c1", word: "Vow", trans: "fer un jurament / jurar", image: "assets/card-covers/vow.png", examples: [{sense: "fer un jurament / jurar", examples: [["He vowed to change.", "Va jurar que canviaria."]]}], struct: "Se usa a menudo con \"to + infinitivo\" (vow to do something) o seguido de \"that\" (vow that)."},
+  {cat: "verb", level: "c1", word: "Urge", trans: "insistir / instar", image: "assets/card-covers/urge.png", examples: [{sense: "insistir / instar", examples: [["She urged him to see a doctor.", "El va instar a anar al metge."]]}], struct: "Se usa fuertemente con la estructura: Urge + persona + to + infinitivo."},
+  {cat: "adjective", level: "c1", word: "Adamant", trans: "ferm / inflexible", image: "assets/card-covers/adamant.png", examples: [{sense: "ferm / inflexible", examples: [["He was adamant that he wouldn't go.", "Es va mostrar inflexible: no hi aniria."]]}], struct: "Suele ir acompañado de \"that\" (adamant that) o \"about\" (adamant about something)."},
+  {cat: "adjective", level: "c1", word: "Dismissive", trans: "indiferent / despectiu", image: "assets/card-covers/dismissive.png", examples: [{sense: "indiferent / despectiu", examples: [["She gave a dismissive answer.", "Va donar una resposta despectiva."]]}], struct: "Suele usarse con la preposición \"of\" (dismissive of something/someone)."},
+  {cat: "adjective", level: "c1", word: "Astounded", trans: "estupefacte", image: "assets/card-covers/astounded.png", examples: [{sense: "estupefacte", examples: [["I was astounded by the news.", "Em vaig quedar estupefacte amb la notícia."]]}], struct: "Suele ir con \"by\" o \"at\" (astounded by/at) o con infinitivo (astounded to see)."},
+  {cat: "adjective", level: "c1", word: "Appalling", trans: "horrorós", image: "assets/card-covers/appalling.png", examples: [{sense: "horrorós", examples: [["The conditions were appalling.", "Les condicions eren horroroses."]]}], struct: "Adjetivo que precede a un sustantivo (appalling behaviour) o sigue al verbo to be (it is appalling)."},
+  {cat: "adjective", level: "c1", word: "Relentless", trans: "implacable / incessant", image: "assets/card-covers/relentless.png", examples: [{sense: "implacable / incessant", examples: [["The relentless rain continued all week.", "La pluja incessant va continuar tota la setmana."]]}], struct: "Adjetivo para describir algo incesante. Se usa mucho con sustantivos abstractos: relentless pressure, relentless heat."},
   {cat: "noun", level: "c1", word: "Whim", trans: "caprici", examples: [{sense: "caprici", examples: [["He bought the car on a whim.", "Va comprar el cotxe per caprici."]]}], struct: "Generalmente aparece en la expresión \"on a whim\" (por capricho, impulsivamente)."},
   {cat: "adjective", level: "c1", word: "Insurmountable", trans: "insuperable / invencible / inabastable", examples: [{sense: "insuperable / invencible / inabastable", examples: [["They faced insurmountable odds.", "Es van enfrontar a obstacles insuperables."]]}], struct: "Típicamente acompaña a sustantivos como \"obstacles\", \"difficulties\", \"problems\"."},
   {cat: "verb", level: "c1", word: "Dwindled", trans: "esgotar-se gradualment", examples: [{sense: "esgotar-se gradualment", examples: [["Their savings dwindled over the years.", "Els seus estalvis es van esgotar gradualment amb els anys."]]}], struct: "Suele usarse sin objeto (intransitivo) o con preposiciones de cantidad: \"dwindled to almost nothing\"."},
@@ -4432,19 +4443,26 @@ function renderStudy(){
   
   /* FRONT */
   var fcWord = document.getElementById("fcWord");
-  fcWord.textContent = window.REVERSE_STUDY ? (capFirst(ed.trans || c.trans) || "—") : c.word;
+  var visibleWord = window.REVERSE_STUDY ? (capFirst(ed.trans || c.trans) || "—") : (ed.customWord || c.word);
+  fcWord.textContent = visibleWord;
+  var wordLength = visibleWord.length;
+  fcWord.style.fontSize = wordLength > 42 ? "19px" : (wordLength > 32 ? "22px" : (wordLength > 24 ? "26px" : (wordLength > 17 ? "30px" : "")));
   fcWord.contentEditable = STUDY_EDIT_MODE ? "true" : "false";
   fcWord.classList.toggle("editable-field", STUDY_EDIT_MODE);
   fcWord.onclick = function(e) { copyToClipboard(e, c.word); };
   
   var drawWrap = document.getElementById("fcDrawingWrap");
+  var frontFace = document.querySelector(".fc-front");
   var drawingHtml = "";
-  if (ed.customImage) {
-    drawingHtml = '<img src="' + ed.customImage + '" style="max-width:100%; max-height:220px; object-fit:contain; border-radius:8px; box-shadow:0 3px 10px rgba(0,0,0,0.1); flex: 1 1 auto; min-height: 0; height: 100%;">';
-    document.getElementById("fcImageDelete").style.display = "flex";
+  var coverImage = ed.customImage || c.image;
+  if (coverImage) {
+    frontFace.classList.add("has-cover");
+    drawingHtml = '<img class="fc-cover-image" src="' + coverImage + '" alt="Ilustración de ' + (c.word || "la palabra") .replace(/"/g, '&quot;') + '" onclick="openImageZoomModal(event)">';
+    document.getElementById("fcImageDelete").style.display = ed.customImage ? "flex" : "none";
     drawWrap.style.width = "100%";
     drawWrap.style.height = "auto";
   } else {
+    frontFace.classList.remove("has-cover");
     document.getElementById("fcImageDelete").style.display = "none";
     drawWrap.style.width = "";
     drawWrap.style.height = "";
@@ -4455,7 +4473,7 @@ function renderStudy(){
       drawingHtml = DRAWINGS[c.cat] || "";
     }
   }
-  if (STUDY_EDIT_MODE && !ed.customImage) {
+  if (STUDY_EDIT_MODE && !coverImage) {
     drawingHtml += '<button type="button" class="fc-icon-edit-btn fc-edit-only" onclick="openIconPicker()">Elegir Icono</button>';
   }
   document.getElementById("fcDrawingWrap").innerHTML = drawingHtml;
@@ -4655,9 +4673,23 @@ function setStudyLvlFilter(f){if(typeof forceSaveInline==='function') forceSaveI
 
 
 function resetNewCardForm(){
-  document.getElementById("newWord").value="";document.getElementById("newTrans").value="";document.getElementById("newCat").value="phrasal";document.getElementById("newReg").value="N";document.getElementById("newStruct").value="";document.getElementById("newExamples").innerHTML="";addExampleRow("","");addExampleRow("","");
+  document.getElementById("newWord").value="";document.getElementById("newTrans").value="";document.getElementById("newCat").value="phrasal";document.getElementById("newReg").value="N";document.getElementById("newStruct").value="";document.getElementById("newExamples").innerHTML="";document.getElementById("newImageUpload").value="";document.getElementById("newImagePreview").innerHTML="";document.getElementById("newImagePreview").style.display="none";window.newCardImageData="";addExampleRow("","");addExampleRow("","");
 }
 function openAddCardModal(){resetNewCardForm();document.getElementById("addCardModal").classList.add("show");document.getElementById("addCardModal").setAttribute("aria-hidden","false");setTimeout(function(){document.getElementById("newWord").focus()},50)}
+function handleNewCardImageUpload(e){
+  var file=e.target.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    var img=new Image();
+    img.onload=function(){
+      var max=900, scale=Math.min(1,max/Math.max(img.width,img.height));
+      var canvas=document.createElement("canvas"); canvas.width=Math.max(1,Math.round(img.width*scale)); canvas.height=Math.max(1,Math.round(img.height*scale));
+      canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+      window.newCardImageData=canvas.toDataURL("image/webp",0.72);
+      var preview=document.getElementById("newImagePreview"); preview.innerHTML='<img src="'+window.newCardImageData+'" alt="Vista previa de portada" style="max-width:180px;max-height:120px;object-fit:cover;border-radius:10px;box-shadow:0 3px 10px rgba(0,0,0,.12);">'; preview.style.display="block";
+    }; img.src=ev.target.result;
+  }; reader.readAsDataURL(file);
+}
 function handleImageUpload(e) {
   var file = e.target.files[0];
   if(!file) return;
@@ -4834,8 +4866,9 @@ function openImageZoomModal(e) {
   var ed = USER_EDITS[k] || {};
   var imgHTML = "";
   
-  if (ed.customImage) {
-    imgHTML = '<img src="' + ed.customImage + '" style="max-width:100%; max-height:60vh; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,0.1);">';
+  var coverImage = ed.customImage || c.image;
+  if (coverImage) {
+    imgHTML = '<img src="' + coverImage + '" style="max-width:100%; max-height:60vh; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,0.1);">';
   } else {
     var chosenIcon = ed.icon || c.icon;
     var rawSvg = "";
@@ -4882,7 +4915,7 @@ function saveNewFlashcard(){
   var card={cat:cat,word:word,trans:trans,reg:document.getElementById("newReg").value,struct:document.getElementById("newStruct").value.trim(),custom:true,originalWord:word,originalCat:cat};
   if(lvl) card.level = lvl;
   if(cat==="phrasal"||cat==="connector")card.meaning=trans;
-  USER_CARDS.push(card);USER_EDITS[cardKey(card)]={trans:trans,typeText:getTypeName(cat),regText:getRegisterName(card.reg),struct:card.struct,examples:[{sense:trans,examples:examples}]};saveUserCards();saveEdits();updateHomeTotal();closeAddCardModal();
+  USER_CARDS.push(card);USER_EDITS[cardKey(card)]={trans:trans,typeText:getTypeName(cat),regText:getRegisterName(card.reg),struct:card.struct,examples:[{sense:trans,examples:examples}]};if(window.newCardImageData)USER_EDITS[cardKey(card)].customImage=window.newCardImageData;saveUserCards();saveEdits();updateHomeTotal();closeAddCardModal();
   studyCatFilter="all";studyLvlFilter="all";studyRegFilter="all";studySearch=word;document.getElementById("searchInp").value=word;
   var regSel = document.getElementById("regFilterSel"); if(regSel) regSel.value="all";
   var lvlSelFilter = document.getElementById("lvlFilterSel"); if(lvlSelFilter) lvlSelFilter.value="all";
@@ -4996,8 +5029,8 @@ document.addEventListener("DOMContentLoaded",function(){
       var structure = ed.struct || c.struct || "";
       
       var imgHtml = "";
-      if (ed.customImage) {
-        imgHtml = '<img src="' + ed.customImage + '">';
+      if (ed.customImage || c.image) {
+        imgHtml = '<img src="' + (ed.customImage || c.image) + '">';
       } else {
         var chosenIcon = ed.icon || c.icon;
         if (chosenIcon && typeof LUCIDE_ICONS !== 'undefined' && LUCIDE_ICONS[chosenIcon]) {
@@ -5082,6 +5115,7 @@ document.addEventListener("DOMContentLoaded",function(){
   document.getElementById("btnCancelNewCard").addEventListener("click",closeAddCardModal);
   document.getElementById("btnSaveNewCard").addEventListener("click",saveNewFlashcard);
   document.getElementById("btnNewExample").addEventListener("click",function(){addExampleRow("","")});
+  document.getElementById("newImageUpload").addEventListener("change",handleNewCardImageUpload);
   document.getElementById("addCardModal").addEventListener("click",function(e){if(e.target===this)closeAddCardModal()});
   ["fcTrans","fcTypeVal","fcLevelVal","fcRegVal","fcStructVal"].forEach(function(id){document.getElementById(id).addEventListener("blur",function(e){saveFieldFromElement(e.target)});});
   document.getElementById("fcTypeSelect").addEventListener("change", function(e) {
